@@ -21,6 +21,34 @@ if (! defined ( 'LogicBoard' ))
 	exit ( "Error, wrong way to file.<br><a href=\"/\">Go to main</a>." );
 }
 
+function get_categories($id, $separator=" &raquo;")
+{
+	
+	global $cache_dle_cat_info;
+	
+	if( ! $id ) return;
+	
+	$parent_id = $cache_dle_cat_info[$id]['parentid'];
+	
+	if( Links::$rewrite_url_site ) $list = "<a href=\"" . Links::$main_site . get_dle_url( $id ) . "/\">{$cache_dle_cat_info[$id]['name']}</a>";
+	else $list = "<a href=\"".Links::$main_site."?do=cat&amp;category={$cache_dle_cat_info[$id]['alt_name']}\">{$cache_dle_cat_info[$id]['name']}</a>";
+	
+	while ( $parent_id ) {
+		
+		if( Links::$rewrite_url_site ) $list = "<a href=\"" . Links::$main_site . get_dle_url( $parent_id ) . "/\">{$cache_dle_cat_info[$parent_id]['name']}</a>" . "{$separator} " . $list;
+		else $list = "<a href=\"".Links::$main_site."?do=cat&amp;category={$cache_dle_cat_info[$parent_id]['alt_name']}\">{$cache_dle_cat_info[$parent_id]['name']}</a>" . "{$separator} " . $list;
+		
+		$parent_id = $cache_dle_cat_info[$parent_id]['parentid'];
+
+		if($parent_id) {		
+			if( $cache_dle_cat_info[$parent_id]['parentid'] == $cache_dle_cat_info[$parent_id]['id'] ) break;
+		}
+
+	}
+	
+	return $list;
+}
+
 // Определение категорий и их параметры
 $cache_dle_cat_info = $cache->take("cat_info", "", "dle_modules");
 
@@ -56,9 +84,33 @@ $tpl->load_template( 'topnews.tpl' );
 $top_number = 10;
 $category_separator = ","; // Задачем разделитель как в настройках DLE
 
-$db->query( "SELECT p.id, p.date, p.short_story, p.xfields, p.title, p.category, p.alt_name FROM " . PREFIX . "_post p LEFT JOIN " . PREFIX . "_post_extras e ON (p.id=e.news_id) WHERE p.approve=1 ORDER BY rating DESC, comm_num DESC, news_read DESC, date DESC LIMIT 0,{$top_number}" );
+$where = array();
+$where[] = "approve='1'";
+$order = "rating DESC, comm_num DESC, news_read DESC, date DESC";
 
-while ( $row = $db->get_row() )
+//$where = implode (" AND ", $where);
+
+############ SQL - Start
+$DB->prefix = array(
+                        0 => DLE_PREFIX,
+                        1 => DLE_PREFIX
+                    );
+
+$DB->rows(array("p.id", "p.title", "p.date", "p.alt_name", "p.category", "p.short_story", "p.xfields")); 
+
+$DB->table_arr("post", "p");
+$DB->join("LEFT");
+$DB->table_arr("post_extras", "ex");
+
+$DB->join_on("p.id=ex.news_id");
+ 
+$DB->where($where);
+$DB->sort($order);
+$DB->limit("0, ".$top_number);
+$DB->join_select();
+############ SQL - End
+
+while ( $row = $DB->get_row() )
 {
 	$row['date'] = strtotime( $row['date'] );
 
@@ -129,19 +181,19 @@ while ( $row = $db->get_row() )
 		$full_link = Links::$main_site . "index.php?newsid=" . $row['id'];
 	}
 		
-	$tpl->set( '{date}', formatdate($row['date']) );
+	$tpl->tags( '{date}', formatdate($row['date']) );
 
 	$news_date = $row['date'];
 	$tpl->copy_template = preg_replace_callback ( "#\{date=(.+?)\}#i", "formdate", $tpl->copy_template );
 
-	$tpl->set( '{category}', $my_cat );
-	$tpl->set( '{link-category}', $my_cat_link );
+	$tpl->tags( '{category}', $my_cat );
+	$tpl->tags( '{link-category}', $my_cat_link );
 
 	$row['title'] = stripslashes( $row['title'] );
 
 	$row['title'] = str_replace( "{", "&#123;", $row['title'] );
 
-	$tpl->set( '{title}', $row['title'] );
+	$tpl->tags( '{title}', $row['title'] );
 	
 	if ( preg_match( "#\\{title limit=['\"](.+?)['\"]\\}#i", $tpl->copy_template, $matches ) )
 	{
@@ -159,10 +211,10 @@ while ( $row = $db->get_row() )
 			}
 		}
 
-		$tpl->set( $matches[0], $row['title'] );
+		$tpl->tags( $matches[0], $row['title'] );
 	}
 
-	$tpl->set( '{link}', $full_link );
+	$tpl->tags( '{link}', $full_link );
 
 	$row['short_story'] = stripslashes( $row['short_story'] );
 
@@ -218,7 +270,7 @@ while ( $row = $db->get_row() )
 		$tpl->copy_template = preg_replace( "#\\{image-(.+?)\\}#i", "{THEME}/dleimages/no_image.jpg", $tpl->copy_template );
 	}
 
-	$tpl->set( '{text}', $row['short_story'] );
+	$tpl->tags( '{text}', $row['short_story'] );
 
 	if ( preg_match( "#\\{text limit=['\"](.+?)['\"]\\}#i", $tpl->copy_template, $matches ) )
 	{
@@ -238,12 +290,13 @@ while ( $row = $db->get_row() )
 			}
 		}
 
-		$tpl->set( $matches[0], $row['short_story'] );
+		$tpl->tags( $matches[0], $row['short_story'] );
 	}
 
 	$tpl->compile( 'topnews' );
 }
 
-$tpl->clear();	
-$db->free();
+$tpl->clear();
+$topnews = $tpl->result['topnews'];
+
 ?>
