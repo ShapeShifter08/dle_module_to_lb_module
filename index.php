@@ -31,6 +31,7 @@ require_once LB_GLOBAL.'/statistic.php';
 require_once LB_MODULES.'/last_topcs.php';
 require_once LB_MODULES.'/last_status.php';
 require_once LB_MODULES.'/dle_news.php';
+require_once LB_MODULES.'/topnews.php';
 
 $lang_index = language_forum ("board/lang_index");
 
@@ -39,6 +40,7 @@ $tpl->load_template ( 'global.tpl' );
 $tpl->tags( '{last_topics}', $last_topics );
 $tpl->tags( '{last_status}', $last_status );
 $tpl->tags( '{dle_news}', $block_news );
+$tpl->tags( '{topnews}', $topnews );
 $tpl->tags( '{time_now}', date("d.m.Y, H:i", FORUM_TIME) );
 $tpl->tags( '{link_topic_active}', Links::Module("board", "topic_active") );
 $tpl->tags( '{link_moderators}', Links::Module("users", "moderators") );
