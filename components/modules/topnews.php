@@ -25,9 +25,6 @@ $this_month = date( 'Y-m-d H:i:s', $_TIME );
 
 $tpl->load_template( 'topnews.tpl' );
 
-if( strpos( $tpl->copy_template, "[xfvalue_" ) !== false OR strpos( $tpl->copy_template, "[xfgiven_" ) !== false ) { $xfound = true; $xfields = xfieldsload();}
-else $xfound = false;
-
 $config['top_number'] = intval($config['top_number']);
 if ($config['top_number'] < 1 ) $config['top_number'] = 10;
 
@@ -199,70 +196,6 @@ while ( $row = $db->get_row() ) {
 		$tpl->set( $matches[0], $row['short_story'] );
 
 	}
-
-	// Обработка дополнительных полей
-	if( $xfound ) {
-		$xfieldsdata = xfieldsdataload( $row['xfields'] );
-		
-		foreach ( $xfields as $value ) {
-			$preg_safe_name = preg_quote( $value[0], "'" );
-
-			if ( $value[6] AND !empty( $xfieldsdata[$value[0]] ) ) {
-				$temp_array = explode( ",", $xfieldsdata[$value[0]] );
-				$value3 = array();
-
-				foreach ($temp_array as $value2) {
-
-					$value2 = trim($value2);
-					$value2 = str_replace("&#039;", "'", $value2);
-
-					if( $config['allow_alt_url'] ) $value3[] = "<a href=\"" . $config['http_home_url'] . "xfsearch/" . urlencode( $value2 ) . "/\">" . $value2 . "</a>";
-					else $value3[] = "<a href=\"$PHP_SELF?do=xfsearch&amp;xf=" . urlencode( $value2 ) . "\">" . $value2 . "</a>";
-				}
-
-				$xfieldsdata[$value[0]] = implode(", ", $value3);
-
-				unset($temp_array);
-				unset($value2);
-				unset($value3);
-
-			}
-	
-			if( empty( $xfieldsdata[$value[0]] ) ) {
-				$tpl->copy_template = preg_replace( "'\\[xfgiven_{$preg_safe_name}\\](.*?)\\[/xfgiven_{$preg_safe_name}\\]'is", "", $tpl->copy_template );
-				$tpl->copy_template = str_replace( "[xfnotgiven_{$value[0]}]", "", $tpl->copy_template );
-				$tpl->copy_template = str_replace( "[/xfnotgiven_{$value[0]}]", "", $tpl->copy_template );
-			} else {
-				$tpl->copy_template = preg_replace( "'\\[xfnotgiven_{$preg_safe_name}\\](.*?)\\[/xfnotgiven_{$preg_safe_name}\\]'is", "", $tpl->copy_template );
-				$tpl->copy_template = str_replace( "[xfgiven_{$value[0]}]", "", $tpl->copy_template );
-				$tpl->copy_template = str_replace( "[/xfgiven_{$value[0]}]", "", $tpl->copy_template );
-			}
-			
-			$xfieldsdata[$value[0]] = stripslashes( $xfieldsdata[$value[0]] );
-
-			if ( preg_match( "#\\[xfvalue_{$preg_safe_name} limit=['\"](.+?)['\"]\\]#i", $tpl->copy_template, $matches ) ) {
-				$count= intval($matches[1]);
-	
-				$xfieldsdata[$value[0]] = str_replace( "</p><p>", " ", $xfieldsdata[$value[0]] );
-				$xfieldsdata[$value[0]] = strip_tags( $xfieldsdata[$value[0]], "<br>" );
-				$xfieldsdata[$value[0]] = trim(str_replace( "<br>", " ", str_replace( "<br />", " ", str_replace( "\n", " ", str_replace( "\r", "", $xfieldsdata[$value[0]] ) ) ) ));
-	
-				if( $count AND dle_strlen( $xfieldsdata[$value[0]], $config['charset'] ) > $count ) {
-						
-					$xfieldsdata[$value[0]] = dle_substr( $xfieldsdata[$value[0]], 0, $count, $config['charset'] );
-						
-					if( ($temp_dmax = dle_strrpos( $xfieldsdata[$value[0]], ' ', $config['charset'] )) ) $xfieldsdata[$value[0]] = dle_substr( $xfieldsdata[$value[0]], 0, $temp_dmax, $config['charset'] );
-					
-				}
-	
-				$tpl->set( $matches[0], $xfieldsdata[$value[0]] );
-	
-			} else	$tpl->copy_template = str_replace( "[xfvalue_{$value[0]}]", $xfieldsdata[$value[0]], $tpl->copy_template );
-
-		}
-	}
-	// Обработка дополнительных полей
-
 
 	$tpl->compile( 'topnews' );
 }
