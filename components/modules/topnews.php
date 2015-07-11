@@ -25,10 +25,9 @@ $this_month = date( 'Y-m-d H:i:s', $_TIME );
 
 $tpl->load_template( 'topnews.tpl' );
 
-$config['top_number'] = intval($config['top_number']);
-if ($config['top_number'] < 1 ) $config['top_number'] = 10;
+$top_number = 10;
 
-$db->query( "SELECT p.id, p.date, p.short_story, p.xfields, p.title, p.category, p.alt_name FROM " . PREFIX . "_post p LEFT JOIN " . PREFIX . "_post_extras e ON (p.id=e.news_id) WHERE p.approve=1 ORDER BY rating DESC, comm_num DESC, news_read DESC, date DESC LIMIT 0,{$config['top_number']}" );
+$db->query( "SELECT p.id, p.date, p.short_story, p.xfields, p.title, p.category, p.alt_name FROM " . PREFIX . "_post p LEFT JOIN " . PREFIX . "_post_extras e ON (p.id=e.news_id) WHERE p.approve=1 ORDER BY rating DESC, comm_num DESC, news_read DESC, date DESC LIMIT 0,{$top_number}" );
 
 while ( $row = $db->get_row() ) {
 	
