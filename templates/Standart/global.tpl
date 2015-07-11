@@ -102,6 +102,16 @@
             
 		<div class="board_side">
 			<div class="board_block">
+				<h3 id="c_01">Популярные статьи<span title="свернуть" class="c_toggle"></span><i></i><span class="co co5"><span class="tr"></span><span class="br"></span></span></h3>
+				<div class="bb_cont">
+					<ol class="bb_last_feed">
+						{topnews}				
+					</ol>
+					<div class="co co5"><div class="tl"></div><div class="tr"></div><div class="bl"></div><div class="br"></div></div>
+				</div>
+			</div>
+			<!--board_block end-->
+			<div class="board_block">
 				<h3 id="c_01">Последние темы<span title="свернуть" class="c_toggle"></span><i></i><span class="co co5"><span class="tr"></span><span class="br"></span></span></h3>
 				<div class="bb_cont">
 					<ol class="bb_last_feed">
